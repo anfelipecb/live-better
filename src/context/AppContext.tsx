@@ -7,11 +7,22 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react';
-import type { AppState, AppAction } from '@/types';
+import type { AppState, AppAction, Reward } from '@/types';
 import { exercises } from '@/data/exercises';
 import { recipes } from '@/data/recipes';
 import { sampleHabits } from '@/data/sampleHabits';
 import { sampleGoals } from '@/data/sampleGoals';
+
+// ── Default Rewards ──────────────────────────────────────────────────
+
+const defaultRewards: Reward[] = [
+  { id: 'r1', name: 'Order Delivery', description: 'Allow yourself to order food delivery once', icon: '🍔', costXP: 200, unlocked: false },
+  { id: 'r2', name: 'Rest Day Pass', description: 'Take an extra rest day guilt-free', icon: '😴', costXP: 150, unlocked: false },
+  { id: 'r3', name: 'Cheat Meal', description: 'Enjoy a cheat meal without tracking', icon: '🍕', costXP: 300, unlocked: false },
+  { id: 'r4', name: 'Gaming Session', description: '2 hours of guilt-free gaming', icon: '🎮', costXP: 100, unlocked: false },
+  { id: 'r5', name: 'Movie Night', description: 'Skip evening routine for a movie', icon: '🎬', costXP: 120, unlocked: false },
+  { id: 'r6', name: 'Weekend Trip', description: 'A weekend trip as a reward for consistency', icon: '✈️', costXP: 1000, unlocked: false },
+];
 
 // ── Initial State ─────────────────────────────────────────────────────
 
@@ -34,6 +45,9 @@ const initialState: AppState = {
   habits: sampleHabits,
   habitLogs: [],
   goals: sampleGoals,
+  xpEvents: [],
+  totalXP: 0,
+  rewards: defaultRewards,
 };
 
 // ── Reducer ───────────────────────────────────────────────────────────
@@ -211,6 +225,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         profile: { ...state.profile, ...action.payload },
       };
+
+    // ── Gamification ──────────────────────────────────────────────
+    case 'ADD_XP':
+      return {
+        ...state,
+        xpEvents: [...state.xpEvents, action.payload],
+        totalXP: state.totalXP + action.payload.xp,
+      };
+
+    case 'UNLOCK_REWARD': {
+      const reward = state.rewards.find((r) => r.id === action.payload);
+      if (!reward || reward.unlocked) return state;
+      return {
+        ...state,
+        totalXP: state.totalXP - reward.costXP,
+        rewards: state.rewards.map((r) =>
+          r.id === action.payload ? { ...r, unlocked: true } : r,
+        ),
+      };
+    }
 
     default:
       return state;

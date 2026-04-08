@@ -13,6 +13,7 @@ import {
   Target,
   User,
   Flame,
+  Zap,
 } from 'lucide-react';
 
 const today = () => {
@@ -27,7 +28,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Home', href: '/', icon: Zap },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Day Planner', href: () => `/day/${today()}`, icon: CalendarDays },
   { label: 'Week View', href: '/week', icon: CalendarRange },
   { label: 'Workouts', href: '/workouts', icon: Dumbbell },
@@ -39,11 +41,11 @@ const navItems: NavItem[] = [
 ];
 
 const mobileItems: NavItem[] = [
-  navItems[0], // Dashboard
-  navItems[1], // Day Planner
-  navItems[3], // Workouts
-  navItems[4], // Meals
-  navItems[7], // Goals
+  navItems[0], // Home (Zap icon)
+  navItems[2], // Day Planner
+  navItems[4], // Workouts
+  navItems[5], // Meals
+  navItems[8], // Goals
 ];
 
 function resolveHref(href: string | (() => string)): string {

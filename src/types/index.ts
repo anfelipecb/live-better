@@ -154,6 +154,51 @@ export interface Goal {
   milestones: Milestone[];
 }
 
+// ── Gamification ─────────────────────────────────────────────────────
+
+export interface XPEvent {
+  id: string;
+  date: string;
+  type: 'workout' | 'meal' | 'habit' | 'task' | 'hydration' | 'streak_bonus';
+  description: string;
+  xp: number;
+}
+
+export interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  costXP: number; // XP needed to unlock
+  unlocked: boolean;
+}
+
+// XP values for different actions
+export const XP_VALUES = {
+  COMPLETE_WORKOUT: 50,
+  COMPLETE_TASK: 10,
+  COMPLETE_HABIT: 15,
+  LOG_MEAL: 10,
+  DRINK_WATER: 5,
+  STREAK_BONUS_PER_DAY: 5, // multiplied by streak length
+  COMPLETE_ALL_HABITS: 30, // bonus for completing ALL habits in a day
+  MILESTONE_COMPLETE: 25,
+} as const;
+
+// Level thresholds - Solo Leveling inspired ranks
+export const LEVELS = [
+  { level: 1, title: 'E-Rank', minXP: 0, color: '#6b7280' },
+  { level: 2, title: 'D-Rank', minXP: 100, color: '#22c55e' },
+  { level: 3, title: 'C-Rank', minXP: 300, color: '#3b82f6' },
+  { level: 4, title: 'B-Rank', minXP: 600, color: '#8b5cf6' },
+  { level: 5, title: 'A-Rank', minXP: 1000, color: '#f59e0b' },
+  { level: 6, title: 'S-Rank', minXP: 1500, color: '#ef4444' },
+  { level: 7, title: 'S-Rank Hunter', minXP: 2500, color: '#ec4899' },
+  { level: 8, title: 'National Level', minXP: 4000, color: '#06b6d4' },
+  { level: 9, title: 'Monarch', minXP: 6000, color: '#fbbf24' },
+  { level: 10, title: 'Shadow Monarch', minXP: 10000, color: '#a855f7' },
+] as const;
+
 // ── App State ─────────────────────────────────────────────────────────
 
 export interface AppState {
@@ -168,6 +213,9 @@ export interface AppState {
   habits: Habit[];
   habitLogs: HabitLog[];
   goals: Goal[];
+  xpEvents: XPEvent[];
+  totalXP: number;
+  rewards: Reward[];
 }
 
 // ── Reducer Actions ───────────────────────────────────────────────────
@@ -195,4 +243,6 @@ export type AppAction =
   | { type: 'UPDATE_GOAL'; payload: Goal }
   | { type: 'DELETE_GOAL'; payload: string }
   | { type: 'TOGGLE_MILESTONE'; payload: { goalId: string; milestoneId: string } }
-  | { type: 'UPDATE_PROFILE'; payload: Partial<Profile> };
+  | { type: 'UPDATE_PROFILE'; payload: Partial<Profile> }
+  | { type: 'ADD_XP'; payload: XPEvent }
+  | { type: 'UNLOCK_REWARD'; payload: string }; // reward id
