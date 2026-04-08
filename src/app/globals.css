@@ -1,26 +1,145 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ===== Elevate Dark Glassmorphism Theme ===== */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Core dark palette */
+  --color-dark-950: #0a0a0f;
+  --color-dark-900: #0f1019;
+  --color-dark-800: #161825;
+  --color-dark-700: #1e2035;
+  --color-dark-600: #282a42;
+  --color-dark-500: #3d3f5c;
+  --color-dark-400: #565880;
+  --color-dark-300: #8486a8;
+  --color-dark-200: #b0b2cc;
+  --color-dark-100: #d8d9e8;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Time-of-day accent (overridden by JS) */
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
+
+  /* Semantic colors */
+  --color-success: #34d399;
+  --color-success-dark: #065f46;
+  --color-warning: #fbbf24;
+  --color-warning-dark: #78350f;
+  --color-danger: #f87171;
+  --color-danger-dark: #7f1d1d;
+
+  /* Workout type colors */
+  --color-strength: #8b5cf6;
+  --color-cycling: #06b6d4;
+  --color-yoga: #f472b6;
+  --color-rest: #6ee7b7;
+
+  /* Fonts */
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
   }
 }
 
+/* ===== Time-of-Day Accent System ===== */
+
+:root {
+  /* Default: Morning - Cool Blue */
+  --accent: #3b82f6;
+  --accent-light: #60a5fa;
+  --accent-dark: #1e40af;
+  --accent-glow: rgba(59, 130, 246, 0.3);
+}
+
+[data-time="afternoon"] {
+  --accent: #f59e0b;
+  --accent-light: #fbbf24;
+  --accent-dark: #b45309;
+  --accent-glow: rgba(245, 158, 11, 0.3);
+}
+
+[data-time="evening"] {
+  --accent: #8b5cf6;
+  --accent-light: #a78bfa;
+  --accent-dark: #5b21b6;
+  --accent-glow: rgba(139, 92, 246, 0.3);
+}
+
+/* ===== Base Styles ===== */
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg, #0a0a0f 0%, #0f1019 50%, #161825 100%);
+  color: #d8d9e8;
+  font-family: "Inter", system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ===== Glassmorphism Components ===== */
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+.glass-accent {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--accent) 15%, transparent);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Accent glow effect */
+.accent-glow {
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* ===== Scrollbar ===== */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
