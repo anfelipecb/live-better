@@ -26,7 +26,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-screen">
             <Navigation />
-            <main className="flex-1 md:ml-64 pb-20 md:pb-0">
+            <main className="flex-1 md:ml-64 pb-24 md:pb-0">
               {children}
             </main>
           </div>

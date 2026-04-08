@@ -200,7 +200,7 @@ export default function Home() {
   const totalTasks = todayTasks.length;
 
   return (
-    <div className="min-h-screen px-4 pt-6 pb-24 md:pb-8 max-w-lg mx-auto">
+    <div className="min-h-screen px-4 pt-6 pb-28 md:pb-8 max-w-lg mx-auto overflow-x-hidden">
       {/* ── Player Status Card ─────────────────────────────────────── */}
       <section className="animate-fade-in mb-6">
         <div className="glass-quest rounded-2xl p-5">
@@ -303,8 +303,8 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-strength bg-strength/10 px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-medium text-strength bg-strength/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                   +{XP_VALUES.COMPLETE_WORKOUT} XP
                 </span>
                 {!workoutCompleted && dayOfWeek !== 0 && (
@@ -374,8 +374,8 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                   +{XP_VALUES.LOG_MEAL} XP/meal
                 </span>
                 <Link
@@ -440,7 +440,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <span className="text-xs font-medium text-cycling bg-cycling/10 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-medium text-cycling bg-cycling/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                 +{XP_VALUES.DRINK_WATER} XP/glass
               </span>
             </div>
@@ -481,7 +481,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                 +{XP_VALUES.COMPLETE_HABIT} XP each
               </span>
             </div>
@@ -553,8 +553,8 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-danger bg-danger/10 px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-medium text-danger bg-danger/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                   +{XP_VALUES.COMPLETE_TASK} XP/task
                 </span>
                 <Link

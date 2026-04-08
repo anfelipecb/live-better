@@ -42,3 +42,7 @@ next-env.d.ts
 
 # assignment files
 *.pdf
+
+# playwright testing
+screenshots/
+.playwright-mcp/
