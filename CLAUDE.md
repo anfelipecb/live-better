@@ -17,10 +17,11 @@ A comprehensive life management app for a grad student focused on body recomposi
 - **Custom CSS classes**: `.glass`, `.glass-hover`, `.glass-accent`, `.glass-strong`, `.accent-glow`
 - **Color palette**: `dark-950` through `dark-100` for surfaces, semantic colors for status
 
-## Pages (12 routes)
+## Pages (13 routes)
 | Route | Description |
 |---|---|
-| `/` | Dashboard — today's overview, habits, quick actions |
+| `/` | Home — Solo Leveling-inspired daily companion with quests and XP |
+| `/dashboard` | Dashboard — today's overview, habits, quick actions |
 | `/day/[date]` | Day planner with morning/afternoon/evening time blocks |
 | `/week` | Week overview — 7 day cards, color-coded by workout type |
 | `/workouts` | Workout list + weekly schedule |
@@ -36,9 +37,15 @@ A comprehensive life management app for a grad student focused on body recomposi
 ## State Management
 Single `AppContext` (`src/context/AppContext.tsx`) with a combined reducer handling 24 action types. All state is client-side (in-memory) via `useReducer`. The context provides `state` and `dispatch` to all components via the `useApp()` hook.
 
-**Domains**: tasks, workouts, exercises, recipes, meal assignments, shopping list, habits, habit logs, goals, profile, body stats.
+**Domains**: tasks, workouts, exercises, recipes, meal assignments, shopping list, habits, habit logs, goals, profile, body stats, XP events, rewards.
 
-**Seed data** loaded on init: 32 exercises, 15 recipes, 8 habits, 3 goals with milestones.
+**Seed data** loaded on init: 32 exercises, 15 recipes, 8 habits, 3 goals with milestones, 6 unlockable rewards.
+
+## Gamification System (Solo Leveling-inspired)
+- **XP Events**: earn XP for workouts (+50), tasks (+10), habits (+15), meals (+10), water (+5/glass)
+- **10 Rank Levels**: E-Rank → D-Rank → C-Rank → B-Rank → A-Rank → S-Rank → S-Rank Hunter → National Level → Monarch → Shadow Monarch
+- **Rewards Store**: spend XP on rewards (Order Delivery, Cheat Meal, Gaming Session, etc.)
+- **Daily Quests**: home page shows quest-style cards for today's actions with XP incentives
 
 ## Project Structure
 ```
@@ -66,6 +73,7 @@ npm run lint   # ESLint check
 ```
 
 ## Key Features
+- **Home (Quest System)**: Mobile-first daily companion with player rank card, XP progress bar, 5 daily quest cards (workout, nutrition, hydration, habits, tasks), quick access navigation
 - **Dashboard**: Time-of-day greeting, habit ring, streak counter, today's workout/meals/tasks, goal progress, quick actions
 - **Day Planner**: Morning/afternoon/evening time blocks with task CRUD (add, toggle, delete), priority levels, date navigation
 - **Week Overview**: 7-day grid with color-coded workout types, task completion, meal plan status
