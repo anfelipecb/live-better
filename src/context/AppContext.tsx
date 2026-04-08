@@ -8,6 +8,10 @@ import {
   type Dispatch,
 } from 'react';
 import type { AppState, AppAction } from '@/types';
+import { exercises } from '@/data/exercises';
+import { recipes } from '@/data/recipes';
+import { sampleHabits } from '@/data/sampleHabits';
+import { sampleGoals } from '@/data/sampleGoals';
 
 // ── Initial State ─────────────────────────────────────────────────────
 
@@ -22,14 +26,14 @@ const initialState: AppState = {
   },
   bodyStats: [],
   tasks: [],
-  exercises: [],
+  exercises,
   workouts: [],
-  recipes: [],
+  recipes,
   mealAssignments: [],
   shoppingList: [],
-  habits: [],
+  habits: sampleHabits,
   habitLogs: [],
-  goals: [],
+  goals: sampleGoals,
 };
 
 // ── Reducer ───────────────────────────────────────────────────────────
