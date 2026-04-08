@@ -34,15 +34,11 @@ A comprehensive life management app for a grad student focused on body recomposi
 | `/profile` | Profile info, body stats logging, progress charts |
 
 ## State Management
-Single `AppContext` with a combined reducer delegating to domain-specific slice reducers:
-- `tasksReducer` — day planner tasks
-- `workoutsReducer` — workout logs
-- `mealsReducer` — meal plan assignments
-- `recipesReducer` — recipe library (seeded with ~15 recipes)
-- `shoppingReducer` — shopping list items
-- `habitsReducer` — daily habits + completion logs
-- `goalsReducer` — goals with milestones
-- `profileReducer` — body stats, user preferences
+Single `AppContext` (`src/context/AppContext.tsx`) with a combined reducer handling 24 action types. All state is client-side (in-memory) via `useReducer`. The context provides `state` and `dispatch` to all components via the `useApp()` hook.
+
+**Domains**: tasks, workouts, exercises, recipes, meal assignments, shopping list, habits, habit logs, goals, profile, body stats.
+
+**Seed data** loaded on init: 32 exercises, 15 recipes, 8 habits, 3 goals with milestones.
 
 ## Project Structure
 ```
@@ -68,6 +64,17 @@ npm run dev    # starts on localhost:3000
 npm run build  # production build
 npm run lint   # ESLint check
 ```
+
+## Key Features
+- **Dashboard**: Time-of-day greeting, habit ring, streak counter, today's workout/meals/tasks, goal progress, quick actions
+- **Day Planner**: Morning/afternoon/evening time blocks with task CRUD (add, toggle, delete), priority levels, date navigation
+- **Week Overview**: 7-day grid with color-coded workout types, task completion, meal plan status
+- **Workout Tracker**: Log strength (sets/reps/weight), cycling (distance/time), yoga (duration). Searchable 32-exercise library. Detail view with data tables.
+- **Meal Planner**: Weekly grid (7 days x 4 slots), recipe picker, daily calorie/macro totals, weekly nutrition summary
+- **Recipe Browser**: Search + category filter, full detail with macro breakdown bar, ingredients, steps. Assign to meal plan from recipe page.
+- **Shopping List**: Auto-generate from week's meal plan, manual items, categorized collapsible sections, check-off and clear
+- **Goals & Habits**: Daily habit toggles with streak calculation, 7-day visualization, goal milestones with progress bars
+- **Profile**: View/edit profile, log body weight/fat%, SVG line charts for trends over time
 
 ## Deployment
 Deployed to Vercel. Push to main branch triggers automatic deployment.
