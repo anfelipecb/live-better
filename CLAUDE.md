@@ -1,69 +1,115 @@
 # Elevate - Life Improvement Dashboard
 
 ## Project Overview
-A comprehensive life management app for a grad student focused on body recomposition, nutrition, and productivity. Built with Next.js 16, TypeScript, and Tailwind CSS v4.
+A full-stack life management app for a grad student focused on body recomposition, nutrition, and productivity. Built with Next.js 16, TypeScript, Tailwind CSS v4, Clerk auth, and Supabase.
 
 ## Tech Stack
 - **Next.js 16** with App Router (`src/app/`)
 - **TypeScript** for type safety
 - **Tailwind CSS v4** with dark glassmorphism theme (configured in `globals.css` `@theme` blocks)
-- **React Context + useReducer** for client-side state (no database — data lives in memory)
+- **Clerk** for authentication (sign up, sign in, sign out)
+- **Supabase** for PostgreSQL database with Row Level Security
+- **React Context + useReducer** for client-side state with Supabase persistence layer
+- **TheMealDB API** for recipe discovery (proxied via API routes)
+- **NYT Article Search API** for wellbeing articles (proxied via API routes)
 - **lucide-react** for icons
 - **Inter** font via `next/font/google`
 
-## Design System
-- **Dark glassmorphism**: frosted glass cards over dark gradient backgrounds
-- **Time-of-day adaptive accent colors**: blue (morning 5am-12pm), amber (afternoon 12pm-6pm), purple (evening 6pm-5am)
-- **Custom CSS classes**: `.glass`, `.glass-hover`, `.glass-accent`, `.glass-strong`, `.accent-glow`
-- **Color palette**: `dark-950` through `dark-100` for surfaces, semantic colors for status
+## Authentication
+- Clerk handles sign up, sign in, sign out
+- Clerk JWT template "supabase" enables RLS in Supabase
+- Middleware at `src/middleware.ts` protects all routes except `/sign-in`, `/sign-up`, `/shared/*`, and API routes
+- `ClerkProvider` wraps the app with dark theme
 
-## Pages (13 routes)
+## Database (Supabase)
+15 tables, all with `user_id text NOT NULL` and RLS policies scoped to `auth.jwt() ->> 'sub'`:
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User settings, credit multipliers |
+| `body_stats` | Weight/body fat tracking |
+| `tasks` | Day planner tasks |
+| `workouts` | Workout logs with exercises (JSONB) |
+| `meal_assignments` | Meal plan slots |
+| `shopping_items` | Shopping list |
+| `habits` | Trackable daily habits |
+| `habit_logs` | Per-day habit completions |
+| `goals` | Goals with milestones (JSONB) |
+| `credit_events` | XP/credit activity log |
+| `rewards` | Unlockable rewards |
+| `saved_recipes` | Recipes saved from TheMealDB API |
+| `saved_articles` | Articles saved from NYT API |
+| `onboarding` | Difficulty calibration data |
+| `shared_links` | Public share tokens |
+
+## External APIs
+- **TheMealDB** (no key): `/api/recipes/search`, `/api/recipes/[id]`, `/api/recipes/categories`
+- **NYT Article Search** (API key in env): `/api/articles/search`
+- All proxied through Next.js API routes to hide keys and enable caching
+
+## Pages (23 routes)
 | Route | Description |
 |---|---|
 | `/` | Home — Solo Leveling-inspired daily companion with quests and XP |
 | `/dashboard` | Dashboard — today's overview, habits, quick actions |
+| `/sign-in` | Clerk sign-in page |
+| `/sign-up` | Clerk sign-up page |
+| `/discover` | Search TheMealDB recipes, browse by category, save to account |
+| `/discover/[id]` | TheMealDB recipe detail, save, add to meal plan |
+| `/articles` | Browse NYT wellbeing articles, save favorites |
 | `/day/[date]` | Day planner with morning/afternoon/evening time blocks |
 | `/week` | Week overview — 7 day cards, color-coded by workout type |
 | `/workouts` | Workout list + weekly schedule |
 | `/workouts/log` | Log a new workout (form) |
 | `/workouts/[id]` | Workout detail/edit view |
 | `/meals` | Weekly meal planner grid (7 days x 4 meal slots) |
-| `/recipes` | Recipe browser with search and filter |
+| `/recipes` | Saved recipe browser with search and filter |
 | `/recipes/[id]` | Recipe detail with ingredients, steps, macros |
 | `/shopping` | Shopping list (auto-generated from meals + manual items) |
 | `/goals` | Daily habit tracker with streaks + academic/career goals |
 | `/profile` | Profile info, body stats logging, progress charts |
 
 ## State Management
-Single `AppContext` (`src/context/AppContext.tsx`) with a combined reducer handling 24 action types. All state is client-side (in-memory) via `useReducer`. The context provides `state` and `dispatch` to all components via the `useApp()` hook.
+Single `AppContext` (`src/context/AppContext.tsx`) with a combined reducer handling 26 action types. The context:
+1. Creates a Supabase client authenticated with the Clerk session JWT
+2. Loads all user data from Supabase on mount (`LOAD_STATE` action)
+3. Seeds default profile + rewards + habits for new users
+4. Wraps `dispatch` in `persistingDispatch` — optimistic UI updates with fire-and-forget Supabase writes
 
-**Domains**: tasks, workouts, exercises, recipes, meal assignments, shopping list, habits, habit logs, goals, profile, body stats, XP events, rewards.
-
-**Seed data** loaded on init: 32 exercises, 15 recipes, 8 habits, 3 goals with milestones, 6 unlockable rewards.
+**Persistence layer** (`src/lib/supabase/`):
+- `mappers.ts` — 24 functions converting snake_case ↔ camelCase
+- `queries.ts` — 30 typed CRUD functions across all tables
+- `persist.ts` — switches on all action types to write to Supabase
 
 ## Gamification System (Solo Leveling-inspired)
 - **XP Events**: earn XP for workouts (+50), tasks (+10), habits (+15), meals (+10), water (+5/glass)
-- **10 Rank Levels**: E-Rank → D-Rank → C-Rank → B-Rank → A-Rank → S-Rank → S-Rank Hunter → National Level → Monarch → Shadow Monarch
+- **10 Rank Levels**: E-Rank → Shadow Monarch
 - **Rewards Store**: spend XP on rewards (Order Delivery, Cheat Meal, Gaming Session, etc.)
-- **Daily Quests**: home page shows quest-style cards for today's actions with XP incentives
+- **Daily Quests**: home page shows quest-style cards with XP incentives
 
 ## Project Structure
 ```
 src/
-  app/          — Pages and layouts (App Router)
-  components/   — Reusable components organized by feature
-  context/      — AppContext, reducers, initial state
-  data/         — Seed data (exercises, recipes, habits)
-  lib/          — Utility functions (dates, helpers)
-  types/        — TypeScript interfaces
+  app/            — Pages, layouts, API routes
+  app/api/        — TheMealDB + NYT proxy routes
+  components/     — Reusable components organized by feature
+  context/        — AppContext with Supabase persistence
+  data/           — Seed data (exercises, recipes, habits)
+  lib/            — Utilities (dates, helpers)
+  lib/supabase/   — Client, server, queries, mappers, persist
+  types/          — TypeScript interfaces
 ```
 
-## Conventions
-- Interactive components use `'use client'` directive
-- Root layout is a server component wrapping a client `Providers` component
-- IDs generated with `crypto.randomUUID()`
-- Dates stored as ISO strings (`'YYYY-MM-DD'`)
-- All components in `src/components/` organized by feature area
+## Environment Variables (.env.local)
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SECRET_KEY
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NYT_API_KEY
+```
 
 ## Running Locally
 ```bash
@@ -72,17 +118,5 @@ npm run build  # production build
 npm run lint   # ESLint check
 ```
 
-## Key Features
-- **Home (Quest System)**: Mobile-first daily companion with player rank card, XP progress bar, 5 daily quest cards (workout, nutrition, hydration, habits, tasks), quick access navigation
-- **Dashboard**: Time-of-day greeting, habit ring, streak counter, today's workout/meals/tasks, goal progress, quick actions
-- **Day Planner**: Morning/afternoon/evening time blocks with task CRUD (add, toggle, delete), priority levels, date navigation
-- **Week Overview**: 7-day grid with color-coded workout types, task completion, meal plan status
-- **Workout Tracker**: Log strength (sets/reps/weight), cycling (distance/time), yoga (duration). Searchable 32-exercise library. Detail view with data tables.
-- **Meal Planner**: Weekly grid (7 days x 4 slots), recipe picker, daily calorie/macro totals, weekly nutrition summary
-- **Recipe Browser**: Search + category filter, full detail with macro breakdown bar, ingredients, steps. Assign to meal plan from recipe page.
-- **Shopping List**: Auto-generate from week's meal plan, manual items, categorized collapsible sections, check-off and clear
-- **Goals & Habits**: Daily habit toggles with streak calculation, 7-day visualization, goal milestones with progress bars
-- **Profile**: View/edit profile, log body weight/fat%, SVG line charts for trends over time
-
 ## Deployment
-Deployed to Vercel. Push to main branch triggers automatic deployment.
+Deployed to Vercel with all environment variables configured. Push to main triggers auto-deploy.
