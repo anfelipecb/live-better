@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const apiKey = process.env.NYT_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'NYT API key not configured' },
+      { error: 'NYT API key not configured', response: { docs: [] } },
       { status: 500 },
     );
   }
@@ -27,6 +27,16 @@ export async function GET(request: NextRequest) {
   try {
     const res = await fetch(url.toString(), { next: { revalidate: 600 } });
     const data = await res.json();
+
+    // NYT returns errors in a specific format
+    if (data.fault || data.message || !res.ok) {
+      console.error('NYT API error:', res.status, JSON.stringify(data));
+      return NextResponse.json(
+        { error: data.message || 'NYT API error', response: { docs: [] } },
+        { status: res.status },
+      );
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     console.error('NYT Article Search error:', err);

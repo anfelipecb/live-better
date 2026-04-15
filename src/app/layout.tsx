@@ -26,10 +26,12 @@ export default function RootLayout({
       appearance={{
         variables: {
           colorPrimary: '#8b5cf6',
-          colorBackground: '#0f1019',
-          colorText: '#d8d9e8',
-          colorInputBackground: '#161825',
-          colorInputText: '#d8d9e8',
+          colorBackground: '#161825',
+          colorText: '#f0f0f5',
+          colorTextSecondary: '#b0b2cc',
+          colorInputBackground: '#1e2035',
+          colorInputText: '#f0f0f5',
+          colorNeutral: '#f0f0f5',
         },
       }}
     >

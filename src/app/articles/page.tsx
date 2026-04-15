@@ -51,16 +51,25 @@ export default function ArticlesPage() {
   }, [supabase, userId]);
 
   // ── Search function ───────────────────────────────────────────
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const searchArticles = useCallback(
     async (q: string) => {
       setLoading(true);
+      setApiError(null);
       try {
         const res = await fetch(
           `/api/articles/search?q=${encodeURIComponent(q)}`,
         );
         const data = await res.json();
-        setArticles(data?.response?.docs || []);
+        if (data.error) {
+          setApiError(data.error);
+          setArticles([]);
+        } else {
+          setArticles(data?.response?.docs || []);
+        }
       } catch {
+        setApiError('Failed to fetch articles. Check your connection.');
         setArticles([]);
       } finally {
         setLoading(false);
@@ -171,11 +180,18 @@ export default function ArticlesPage() {
       </div>
 
       {/* Results */}
+      {apiError && (
+        <GlassCard className="mb-4 border-danger/20">
+          <p className="text-danger text-sm">API Error: {apiError}</p>
+          <p className="text-dark-400 text-xs mt-1">The NYT API key may be invalid or rate-limited. Articles will work once a valid key is configured.</p>
+        </GlassCard>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="w-8 h-8 text-accent animate-spin" />
         </div>
-      ) : articles.length === 0 ? (
+      ) : articles.length === 0 && !apiError ? (
         <GlassCard className="text-center py-16">
           <Newspaper size={32} className="mx-auto mb-3 text-dark-500" />
           <p className="text-dark-400">No articles found. Try a different search.</p>

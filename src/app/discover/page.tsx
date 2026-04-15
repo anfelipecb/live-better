@@ -8,7 +8,7 @@ import Header from '@/components/layout/Header';
 import GlassCard from '@/components/ui/GlassCard';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
-import { useSupabase, useUserId } from '@/lib/supabase/client';
+import { useUserId } from '@/lib/supabase/client';
 import { parseIngredients } from '@/types/mealdb';
 import type {
   MealDBMeal,
@@ -33,7 +33,6 @@ interface SummaryResult {
 type ResultItem = FullResult | SummaryResult;
 
 export default function DiscoverPage() {
-  const supabase = useSupabase();
   const userId = useUserId();
 
   const [query, setQuery] = useState('');
@@ -63,17 +62,18 @@ export default function DiscoverPage() {
     if (!userId) return;
 
     async function loadSaved() {
-      const { data } = await supabase
-        .from('saved_recipes')
-        .select('meal_db_id')
-        .eq('user_id', userId!);
-
-      if (data) {
-        setSavedIds(new Set(data.map((r: { meal_db_id: string }) => r.meal_db_id)));
+      try {
+        const res = await fetch('/api/saved-recipes');
+        const json = await res.json();
+        if (json.data) {
+          setSavedIds(new Set(json.data.map((r: { meal_db_id: string }) => r.meal_db_id)));
+        }
+      } catch (err) {
+        console.error('Failed to load saved IDs:', err);
       }
     }
     loadSaved();
-  }, [userId, supabase]);
+  }, [userId]);
 
   // ── Debounced search by name ─────────────────────────────────────
   useEffect(() => {
@@ -153,11 +153,9 @@ export default function DiscoverPage() {
 
     try {
       if (isSaved) {
-        await supabase
-          .from('saved_recipes')
-          .delete()
-          .eq('user_id', userId)
-          .eq('meal_db_id', mealId);
+        await fetch(`/api/saved-recipes?meal_db_id=${mealId}`, {
+          method: 'DELETE',
+        });
 
         setSavedIds((prev) => {
           const next = new Set(prev);
@@ -177,15 +175,18 @@ export default function DiscoverPage() {
 
         const ingredients = parseIngredients(fullMeal);
 
-        await supabase.from('saved_recipes').insert({
-          user_id: userId,
-          meal_db_id: fullMeal.idMeal,
-          name: fullMeal.strMeal,
-          thumbnail: fullMeal.strMealThumb,
-          category: fullMeal.strCategory,
-          area: fullMeal.strArea,
-          instructions: fullMeal.strInstructions,
-          ingredients,
+        await fetch('/api/saved-recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            meal_db_id: fullMeal.idMeal,
+            name: fullMeal.strMeal,
+            thumbnail: fullMeal.strMealThumb,
+            category: fullMeal.strCategory,
+            area: fullMeal.strArea,
+            instructions: fullMeal.strInstructions,
+            ingredients,
+          }),
         });
 
         setSavedIds((prev) => new Set(prev).add(mealId));

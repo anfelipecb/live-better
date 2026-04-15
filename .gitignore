@@ -46,3 +46,7 @@ next-env.d.ts
 # playwright testing
 screenshots/
 .playwright-mcp/
+
+# submission answers (not for repo)
+SUBMISSION.md
+SUBMISSION.pdf
