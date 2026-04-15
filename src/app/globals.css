@@ -166,6 +166,42 @@ body {
   border-color: rgba(52, 211, 153, 0.15);
 }
 
+/* ===== Clerk dark theme overrides ===== */
+
+.cl-card,
+.cl-modalContent,
+.cl-userButtonPopoverCard {
+  background-color: #161825 !important;
+  color: #ffffff !important;
+}
+
+.cl-headerTitle,
+.cl-headerSubtitle,
+.cl-formFieldLabel,
+.cl-dividerText,
+.cl-footerActionText,
+.cl-userPreview__userButton .cl-userPreviewMainIdentifier,
+.cl-userPreview__userButton .cl-userPreviewSecondaryIdentifier,
+.cl-userButtonPopoverActionButton,
+.cl-userButtonPopoverActionButtonText,
+.cl-userButtonPopoverActionButtonIcon {
+  color: #d8d9e8 !important;
+}
+
+.cl-headerTitle {
+  color: #ffffff !important;
+}
+
+.cl-dividerLine {
+  background-color: #282a42 !important;
+}
+
+.cl-formFieldInput {
+  background-color: #1e2035 !important;
+  color: #ffffff !important;
+  border-color: #282a42 !important;
+}
+
 /* ===== Scrollbar ===== */
 
 ::-webkit-scrollbar {

@@ -8,7 +8,7 @@ import GlassCard from '@/components/ui/GlassCard';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useSupabase, useUserId } from '@/lib/supabase/client';
+import { useUserId } from '@/lib/supabase/client';
 import { useApp } from '@/context/AppContext';
 import { parseIngredients } from '@/types/mealdb';
 import { generateId, getToday } from '@/lib/utils';
@@ -34,7 +34,6 @@ export default function DiscoverDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const supabase = useSupabase();
   const userId = useUserId();
   const { dispatch } = useApp();
 
@@ -65,47 +64,50 @@ export default function DiscoverDetailPage({
     loadMeal();
   }, [id]);
 
-  // ── Check if already saved ─────────────────────────────────────
+  // ── Check if already saved (via API route) ─────────────────────
   useEffect(() => {
     if (!userId || !id) return;
 
     async function checkSaved() {
-      const { data } = await supabase
-        .from('saved_recipes')
-        .select('meal_db_id')
-        .eq('user_id', userId!)
-        .eq('meal_db_id', id)
-        .maybeSingle();
-
-      setIsSaved(!!data);
+      try {
+        const res = await fetch('/api/saved-recipes');
+        const json = await res.json();
+        const saved = (json.data || []).some(
+          (r: { meal_db_id: string }) => r.meal_db_id === id,
+        );
+        setIsSaved(saved);
+      } catch {
+        setIsSaved(false);
+      }
     }
     checkSaved();
-  }, [userId, id, supabase]);
+  }, [userId, id]);
 
-  // ── Toggle save ────────────────────────────────────────────────
+  // ── Toggle save (via API route) ────────────────────────────────
   async function handleToggleSave() {
     if (!userId || !meal) return;
 
     setSaving(true);
     try {
       if (isSaved) {
-        await supabase
-          .from('saved_recipes')
-          .delete()
-          .eq('user_id', userId)
-          .eq('meal_db_id', meal.idMeal);
+        await fetch(`/api/saved-recipes?meal_db_id=${meal.idMeal}`, {
+          method: 'DELETE',
+        });
         setIsSaved(false);
       } else {
         const ingredients = parseIngredients(meal);
-        await supabase.from('saved_recipes').insert({
-          user_id: userId,
-          meal_db_id: meal.idMeal,
-          name: meal.strMeal,
-          thumbnail: meal.strMealThumb,
-          category: meal.strCategory,
-          area: meal.strArea,
-          instructions: meal.strInstructions,
-          ingredients,
+        await fetch('/api/saved-recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            meal_db_id: meal.idMeal,
+            name: meal.strMeal,
+            thumbnail: meal.strMealThumb,
+            category: meal.strCategory,
+            area: meal.strArea,
+            instructions: meal.strInstructions,
+            ingredients,
+          }),
         });
         setIsSaved(true);
       }
@@ -291,11 +293,7 @@ export default function DiscoverDetailPage({
       {(meal.strYoutube || meal.strSource) && (
         <div className="flex flex-wrap gap-3 mb-6">
           {meal.strYoutube && (
-            <a
-              href={meal.strYoutube}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={meal.strYoutube} target="_blank" rel="noopener noreferrer">
               <Button variant="secondary" size="sm">
                 <Play className="w-4 h-4 mr-2 text-red-500" />
                 Watch on YouTube
@@ -303,11 +301,7 @@ export default function DiscoverDetailPage({
             </a>
           )}
           {meal.strSource && (
-            <a
-              href={meal.strSource}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={meal.strSource} target="_blank" rel="noopener noreferrer">
               <Button variant="secondary" size="sm">
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Original Source
@@ -321,10 +315,10 @@ export default function DiscoverDetailPage({
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setShowAssignModal(false)}
           />
-          <div className="relative glass rounded-2xl w-full max-w-sm p-6">
+          <div className="relative glass-strong rounded-2xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-dark-100">
                 Add to Meal Plan

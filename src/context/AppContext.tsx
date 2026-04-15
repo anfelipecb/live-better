@@ -344,6 +344,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     async function loadData() {
       try {
+        // Wrap each fetch so one failure doesn't break all
+        const safe = async <T,>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+          try { return await fn(); } catch { return fallback; }
+        };
+
         const [
           profile,
           bodyStats,
@@ -357,17 +362,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           xpEvents,
           rewards,
         ] = await Promise.all([
-          fetchProfile(supabase!, userId!),
-          fetchBodyStats(supabase!, userId!),
-          fetchTasks(supabase!, userId!),
-          fetchWorkouts(supabase!, userId!),
-          fetchMealAssignments(supabase!, userId!),
-          fetchShoppingItems(supabase!, userId!),
-          fetchHabits(supabase!, userId!),
-          fetchHabitLogs(supabase!, userId!),
-          fetchGoals(supabase!, userId!),
-          fetchXPEvents(supabase!, userId!),
-          fetchRewards(supabase!, userId!),
+          safe(() => fetchProfile(supabase!, userId!), null),
+          safe(() => fetchBodyStats(supabase!, userId!), []),
+          safe(() => fetchTasks(supabase!, userId!), []),
+          safe(() => fetchWorkouts(supabase!, userId!), []),
+          safe(() => fetchMealAssignments(supabase!, userId!), []),
+          safe(() => fetchShoppingItems(supabase!, userId!), []),
+          safe(() => fetchHabits(supabase!, userId!), []),
+          safe(() => fetchHabitLogs(supabase!, userId!), []),
+          safe(() => fetchGoals(supabase!, userId!), []),
+          safe(() => fetchXPEvents(supabase!, userId!), []),
+          safe(() => fetchRewards(supabase!, userId!), []),
         ]);
 
         if (cancelled) return;
