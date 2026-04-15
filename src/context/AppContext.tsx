@@ -4,14 +4,36 @@ import {
   createContext,
   useContext,
   useReducer,
+  useEffect,
+  useCallback,
+  useState,
   type ReactNode,
   type Dispatch,
 } from 'react';
+import { useUser, useSession } from '@clerk/nextjs';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { AppState, AppAction, Reward } from '@/types';
 import { exercises } from '@/data/exercises';
 import { recipes } from '@/data/recipes';
 import { sampleHabits } from '@/data/sampleHabits';
 import { sampleGoals } from '@/data/sampleGoals';
+import {
+  fetchProfile,
+  fetchBodyStats,
+  fetchTasks,
+  fetchWorkouts,
+  fetchMealAssignments,
+  fetchShoppingItems,
+  fetchHabits,
+  fetchHabitLogs,
+  fetchGoals,
+  fetchXPEvents,
+  fetchRewards,
+  upsertProfile,
+  insertRewards,
+  insertHabit,
+} from '@/lib/supabase/queries';
+import { persistAction } from '@/lib/supabase/persist';
 
 // ── Default Rewards ──────────────────────────────────────────────────
 
@@ -24,11 +46,11 @@ const defaultRewards: Reward[] = [
   { id: 'r6', name: 'Weekend Trip', description: 'A weekend trip as a reward for consistency', icon: '✈️', costXP: 1000, unlocked: false },
 ];
 
-// ── Initial State ─────────────────────────────────────────────────────
+// ── Initial State (used before Supabase loads) ───────────────────────
 
 const initialState: AppState = {
   profile: {
-    name: 'Felipe',
+    name: '',
     age: 25,
     heightCm: 178,
     goalType: 'recomp',
@@ -42,18 +64,24 @@ const initialState: AppState = {
   recipes,
   mealAssignments: [],
   shoppingList: [],
-  habits: sampleHabits,
+  habits: [],
   habitLogs: [],
-  goals: sampleGoals,
+  goals: [],
   xpEvents: [],
   totalXP: 0,
-  rewards: defaultRewards,
+  rewards: [],
 };
 
 // ── Reducer ───────────────────────────────────────────────────────────
 
-function appReducer(state: AppState, action: AppAction): AppState {
+type InternalAction = AppAction | { type: 'LOAD_STATE'; payload: AppState };
+
+function appReducer(state: AppState, action: InternalAction): AppState {
   switch (action.type) {
+    // ── Hydrate from Supabase ───────────────────────────────────
+    case 'LOAD_STATE':
+      return action.payload;
+
     // ── Tasks ──────────────────────────────────────────────────────
     case 'ADD_TASK':
       return { ...state, tasks: [...state.tasks, action.payload] };
@@ -256,6 +284,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 interface AppContextValue {
   state: AppState;
   dispatch: Dispatch<AppAction>;
+  isLoading: boolean;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -263,10 +292,191 @@ const AppContext = createContext<AppContextValue | undefined>(undefined);
 // ── Provider ──────────────────────────────────────────────────────────
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+  const [state, rawDispatch] = useReducer(appReducer, initialState);
+  const [isLoading, setIsLoading] = useState(true);
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+  const { user, isLoaded: userLoaded } = useUser();
+  const { session } = useSession();
+
+  const userId = user?.id ?? null;
+
+  // ── Create Supabase client when session is available ──────────
+  useEffect(() => {
+    if (!session) {
+      setSupabase(null);
+      return;
+    }
+
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          fetch: async (url, options = {}) => {
+            const clerkToken = await session.getToken({
+              template: 'supabase',
+            });
+            const headers = new Headers(options?.headers);
+            if (clerkToken) {
+              headers.set('Authorization', `Bearer ${clerkToken}`);
+            }
+            return fetch(url, { ...options, headers });
+          },
+        },
+      },
+    );
+
+    setSupabase(client);
+  }, [session]);
+
+  // ── Load data from Supabase on mount ──────────────────────────
+  useEffect(() => {
+    if (!userLoaded) return;
+
+    // Not signed in — use default state
+    if (!userId || !supabase) {
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadData() {
+      try {
+        const [
+          profile,
+          bodyStats,
+          tasks,
+          workouts,
+          mealAssignments,
+          shoppingItems,
+          habits,
+          habitLogs,
+          goals,
+          xpEvents,
+          rewards,
+        ] = await Promise.all([
+          fetchProfile(supabase!, userId!),
+          fetchBodyStats(supabase!, userId!),
+          fetchTasks(supabase!, userId!),
+          fetchWorkouts(supabase!, userId!),
+          fetchMealAssignments(supabase!, userId!),
+          fetchShoppingItems(supabase!, userId!),
+          fetchHabits(supabase!, userId!),
+          fetchHabitLogs(supabase!, userId!),
+          fetchGoals(supabase!, userId!),
+          fetchXPEvents(supabase!, userId!),
+          fetchRewards(supabase!, userId!),
+        ]);
+
+        if (cancelled) return;
+
+        // First-time user: create profile + seed data
+        const isNewUser = !profile;
+
+        if (isNewUser) {
+          const defaultProfile = {
+            name: user?.firstName || 'User',
+            age: 25,
+            heightCm: 178,
+            goalType: 'recomp' as const,
+            targetCalories: 2200,
+            targetProtein: 180,
+          };
+
+          await upsertProfile(supabase!, userId!, defaultProfile);
+          await insertRewards(supabase!, userId!, defaultRewards);
+
+          // Seed default habits
+          for (const h of sampleHabits) {
+            await insertHabit(supabase!, userId!, h);
+          }
+
+          // Reload after seeding
+          const [seededHabits, seededRewards] = await Promise.all([
+            fetchHabits(supabase!, userId!),
+            fetchRewards(supabase!, userId!),
+          ]);
+
+          if (cancelled) return;
+
+          rawDispatch({
+            type: 'LOAD_STATE',
+            payload: {
+              profile: defaultProfile,
+              bodyStats: [],
+              tasks: [],
+              exercises,
+              workouts: [],
+              recipes,
+              mealAssignments: [],
+              shoppingList: [],
+              habits: seededHabits,
+              habitLogs: [],
+              goals: sampleGoals,
+              xpEvents: [],
+              totalXP: 0,
+              rewards: seededRewards,
+            },
+          });
+        } else {
+          // Existing user: load all data
+          const totalXP = xpEvents.reduce((sum, e) => sum + e.xp, 0);
+
+          rawDispatch({
+            type: 'LOAD_STATE',
+            payload: {
+              profile,
+              bodyStats,
+              tasks,
+              exercises,
+              workouts,
+              recipes,
+              mealAssignments,
+              shoppingList: shoppingItems,
+              habits: habits.length > 0 ? habits : sampleHabits,
+              habitLogs,
+              goals: goals.length > 0 ? goals : sampleGoals,
+              xpEvents,
+              totalXP,
+              rewards: rewards.length > 0 ? rewards : defaultRewards,
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load data from Supabase:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    loadData();
+    return () => { cancelled = true; };
+  }, [userId, userLoaded, supabase, user?.firstName]);
+
+  // ── Persisting dispatch ─────────────────────────────────────────
+  const dispatch = useCallback(
+    (action: AppAction) => {
+      // Optimistic: update UI immediately
+      rawDispatch(action);
+
+      // Fire-and-forget: persist to Supabase
+      if (supabase && userId) {
+        // We need the NEW state after this action, but useReducer
+        // hasn't updated yet. We compute it by running the reducer
+        // manually on the current state snapshot.
+        const nextState = appReducer(state, action);
+        persistAction(supabase, userId, action, nextState).catch((err) =>
+          console.error('Persist failed:', err),
+        );
+      }
+    },
+    [supabase, userId, state],
+  );
 
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={{ state, dispatch, isLoading }}>
       {children}
     </AppContext.Provider>
   );
