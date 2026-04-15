@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { UserButton } from '@clerk/nextjs';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -92,6 +93,17 @@ export default function Navigation() {
             );
           })}
         </nav>
+
+        {/* User button */}
+        <div className="px-6 py-4 border-t border-white/5">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'w-8 h-8',
+              },
+            }}
+          />
+        </div>
       </aside>
 
       {/* Mobile bottom tab bar */}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import Providers from "@/components/Providers";
 import Navigation from "@/components/layout/Navigation";
 import "./globals.css";
@@ -21,17 +22,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} dark`}>
-      <body className="min-h-screen antialiased">
-        <Providers>
-          <div className="flex min-h-screen">
-            <Navigation />
-            <main className="flex-1 md:ml-64 pb-24 md:pb-0">
-              {children}
-            </main>
-          </div>
-        </Providers>
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: '#8b5cf6',
+          colorBackground: '#0f1019',
+          colorText: '#d8d9e8',
+          colorInputBackground: '#161825',
+          colorInputText: '#d8d9e8',
+        },
+      }}
+    >
+      <html lang="en" className={`${inter.variable} dark`}>
+        <body className="min-h-screen antialiased">
+          <Providers>
+            <div className="flex min-h-screen">
+              <Navigation />
+              <main className="flex-1 md:ml-64 pb-24 md:pb-0">
+                {children}
+              </main>
+            </div>
+          </Providers>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
