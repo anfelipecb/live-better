@@ -15,6 +15,7 @@ import {
   User,
   Flame,
   Zap,
+  Search,
 } from 'lucide-react';
 
 const today = () => {
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { label: 'Week View', href: '/week', icon: CalendarRange },
   { label: 'Workouts', href: '/workouts', icon: Dumbbell },
   { label: 'Meals', href: '/meals', icon: UtensilsCrossed },
+  { label: 'Discover', href: '/discover', icon: Search },
   { label: 'Recipes', href: '/recipes', icon: ChefHat },
   { label: 'Shopping', href: '/shopping', icon: ShoppingCart },
   { label: 'Goals', href: '/goals', icon: Target },
