@@ -114,7 +114,7 @@ export default function ArticlesPage() {
         return next;
       });
     } else {
-      const thumb = doc.multimedia?.find((m) => m.subtype === 'thumbnail');
+      const thumb = Array.isArray(doc.multimedia) ? doc.multimedia.find((m) => m.subtype === 'thumbnail') : null;
       await supabase.from('saved_articles').insert({
         user_id: userId,
         nyt_url: url,
@@ -130,7 +130,8 @@ export default function ArticlesPage() {
 
   // ── Helpers ───────────────────────────────────────────────────
   function getThumbnail(doc: NYTDoc): string | null {
-    const img = doc.multimedia?.find(
+    if (!Array.isArray(doc.multimedia)) return null;
+    const img = doc.multimedia.find(
       (m) => m.subtype === 'xlarge' || m.subtype === 'thumbnail',
     );
     return img ? `https://static01.nyt.com/${img.url}` : null;

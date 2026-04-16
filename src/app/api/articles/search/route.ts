@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
   const url = new URL('https://api.nytimes.com/svc/search/v2/articlesearch.json');
   url.searchParams.set('q', query);
   url.searchParams.set('page', page);
-  url.searchParams.set('fq', 'section_name:("Health" "Well" "Science" "Food")');
   url.searchParams.set('sort', 'newest');
   url.searchParams.set('api-key', apiKey);
 
